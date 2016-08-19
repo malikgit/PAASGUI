@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<TenantConfiguration>
+	<!-- Tenant Confuguration -->
+	<Tenant id="7" companyName="biz" tenantName="xxx">
+		<SubnetsConfig>
+			<SubnetConfig>
+				<AddSubnet>
+					<SubnetName>testingSubnet</SubnetName>
+					<Vpc>testingVp</Vpc>
+					<Cidr>10.10.10.10/24</Cidr>
+					<Environment>dev2</Environment>
+					<Acl>acl</Acl>
+				</AddSubnet>
+				<AddSubnet>
+					<SubnetName>testingSubnet</SubnetName>
+					<Vpc>testingVp</Vpc>
+					<Cidr>10.10.10.10/24</Cidr>
+					<Environment>dev2</Environment>
+					<Acl>acl</Acl>
+				</AddSubnet>			
+			</SubnetConfig>
+		</SubnetsConfig>
+		<VPCConfigs>
+			<VPCConfig>
+				<AddVirtualPrivateCloud>
+					<VPCName>testing</VPCName>
+					<Cidr>10.10.10.10/24</Cidr>
+					<Acl>acl</Acl>
+				</AddVirtualPrivateCloud>
+				<AddVirtualPrivateCloud>
+					<VPCName>testingVp</VPCName>
+					<Cidr>10.10.10.10/24</Cidr>
+					<Acl>acl</Acl>
+				</AddVirtualPrivateCloud>
+			</VPCConfig>
+		</VPCConfigs>
+		<ImageRegistoryConfigs>
+			<ImageRegistoryConfig>
+				<ImageRegistry>
+					<Name>testingImage</Name>
+					<Location>testingurl</Location>
+					<Version>1.0</Version>
+					<UserName>testing</UserName>
+					<Password>testing</Password>
+				</ImageRegistry>
+				<ImageRegistry>
+					<Name>testingImage</Name>
+					<Location>testingurl</Location>
+					<Version>1.0</Version>
+					<UserName>testing</UserName>
+					<Password>testing</Password>
+				</ImageRegistry>
+			</ImageRegistoryConfig>
+		</ImageRegistoryConfigs>
+		<!-- All Application Configuration Wizard -->
+		<ApplictionsConfig>
+		<!-- Application Configuration -->
+			<ApplicationConfig applicationName="testApp133">
+				<!-- Networkd Configuration -->
+				<NetworkConfig vpcName="vpc_demo02" subnetName="devSub" /> <!-- optional -->
+				<!-- Image Registry Configuration -->				
+				<ImageRegistryConfig name="paas" /> <!-- optional -->
+				<!-- Service Configuration -->			
+				<ServiceConfig> <!-- mandatory -->
+					<!-- create service configuration -->
+					<Service name="testApp133Service" type="512MB" instanceCount="1"/>
+					<!-- Image Registry Configuration -->
+					<ImageRegistry name="paas" repository="paas" tag="prod-tomcat"/>						
+					<!-- Run Settings Configuration -->	
+					<RunSettings runCommand="/usr/local/tomcat/bin/catalina.sh start" hostName="localhost"/>
+					<!-- Network Policy configuration -->
+					<NetworkPolicy portType="Http" hostPort="80" containerPort="8080"/>
+					<!-- Health Check Route Configuration -->
+					<HealthCheckRoute typeName="HTTP" nterval="5" path="/" threshold="7" ignore="6"/>
+					<!-- Volume Configuration -->
+					<Volume>212</Volume>
+					<!-- Subnet configuration -->
+					<Subnet subnetName="devSub" cidr="10.10.10.0/24" />
+				</ServiceConfig>
+			</ApplicationConfig>
+			<!-- Application Configuration -->
+			<ApplicationConfig applicationName="testApp134">
+				<!-- Networkd Configuration -->
+				<NetworkConfig vpcName="vpc_demo02" subnetName="devSub" /> <!-- optional -->
+				<!-- Image Registry Configuration -->				
+				<ImageRegistryConfig name="paas" /> <!-- optional -->
+				<!-- Service Configuration -->			
+				<ServiceConfig> <!-- mandatory -->
+					<!-- create service configuration -->
+					<Service name="testApp134Service" type="512MB" instanceCount="1"/>
+					<!-- Image Registry Configuration -->
+					<ImageRegistry name="paas" repository="paas" tag="prod-tomcat"/>						
+					<!-- Run Settings Configuration -->	
+					<RunSettings runCommand="/usr/local/tomcat/bin/catalina.sh start" hostName="localhost"/>
+					<!-- Network Policy configuration -->
+					<NetworkPolicy portType="Http" hostPort="80" containerPort="8080"/>
+					<!-- Health Check Route Configuration -->
+					<HealthCheckRoute typeName="HTTP" nterval="5" path="/" threshold="7" ignore="6"/>
+					<!-- Volume Configuration -->
+					<Volume>212</Volume>
+					<!-- Subnet configuration -->
+					<Subnet subnetName="devSub" cidr="10.10.10.0/24" />
+				</ServiceConfig>
+			</ApplicationConfig>
+		</ApplictionsConfig>
+		
+		<!-- if needed we can write configuration separately for network configuration,vpc,subnet,imageregistory,containertype -->
+	</Tenant>
+</TenantConfiguration>

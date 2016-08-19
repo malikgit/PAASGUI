@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Insert title here</title>
+<style>
+body {
+	background-color: lightblue;
+}
+</style>
+<script type="text/javascript">
+window.onload = function () {
+	var userDetails;
+   (function (global) {
+	   userDetails=global.localStorage.getItem("sharedtenantid"); 
+	}(window));
+   //alert("feature come here  "+userDetails);
+   var source = userDetails;
+   alert("dddddddddddddddd: " + userDetails);
+    var source = "http://localhost:9000/getLoginPageByTenantid?tenantid="+userDetails;
+    //var source = "http://"+ userDetails +"@localhost:5601";
+    document.getElementById("myFrame").src = source;
+}
+</script>
+</head>
+<body>
+<h1 align="center">This is dashboard Feature page.</h1>
+ 
+<!-- <iframe id="myFrame" width="600" height="300"></iframe> -->
+<iframe id="myFrame" width="1100" height="500"></iframe>
+</body>
+</html>

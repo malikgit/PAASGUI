@@ -1,0 +1,170 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="TenantConfiguration">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Tenant">
+          <xs:annotation>
+            <xs:documentation>Tenant Confuguration  if needed we can write configuration separately for network configuration,vpc,subnet,imageregistory,containertype</xs:documentation>
+          </xs:annotation>
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="ApplictionsConfig">
+                <xs:annotation>
+                  <xs:documentation>All Application Configuration Wizard</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="ApplicationConfig" maxOccurs="unbounded" minOccurs="0">
+                      <xs:annotation>
+                        <xs:documentation>Application Configuration  Application Configuration</xs:documentation>
+                      </xs:annotation>
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="NetworkConfig">
+                            <xs:annotation>
+                              <xs:documentation>Networkd Configuration  Networkd Configuration</xs:documentation>
+                            </xs:annotation>
+                            <xs:complexType>
+                              <xs:simpleContent>
+                                <xs:extension base="xs:string">
+                                  <xs:attribute type="xs:string" name="vpcName" use="optional"/>
+                                  <xs:attribute type="xs:string" name="subnetName" use="optional"/>
+                                </xs:extension>
+                              </xs:simpleContent>
+                            </xs:complexType>
+                          </xs:element>
+                          <xs:element name="ImageRegistryConfig">
+                            <xs:annotation>
+                              <xs:documentation>optional  Image Registry Configuration  optional  Image Registry Configuration</xs:documentation>
+                            </xs:annotation>
+                            <xs:complexType>
+                              <xs:simpleContent>
+                                <xs:extension base="xs:string">
+                                  <xs:attribute type="xs:string" name="name" use="optional"/>
+                                </xs:extension>
+                              </xs:simpleContent>
+                            </xs:complexType>
+                          </xs:element>
+                          <xs:element name="ServiceConfig">
+                            <xs:annotation>
+                              <xs:documentation>optional  Service Configuration  optional  Service Configuration</xs:documentation>
+                            </xs:annotation>
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element name="Service">
+                                  <xs:annotation>
+                                    <xs:documentation>mandatory  create service configuration  mandatory  create service configuration</xs:documentation>
+                                  </xs:annotation>
+                                  <xs:complexType>
+                                    <xs:simpleContent>
+                                      <xs:extension base="xs:string">
+                                        <xs:attribute type="xs:string" name="name" use="optional"/>
+                                        <xs:attribute type="xs:string" name="type" use="optional"/>
+                                        <xs:attribute type="xs:byte" name="instanceCount" use="optional"/>
+                                      </xs:extension>
+                                    </xs:simpleContent>
+                                  </xs:complexType>
+                                </xs:element>
+                                <xs:element name="ImageRegistry">
+                                  <xs:annotation>
+                                    <xs:documentation>Image Registry Configuration  Image Registry Configuration</xs:documentation>
+                                  </xs:annotation>
+                                  <xs:complexType>
+                                    <xs:simpleContent>
+                                      <xs:extension base="xs:string">
+                                        <xs:attribute type="xs:string" name="name" use="optional"/>
+                                        <xs:attribute type="xs:string" name="repository" use="optional"/>
+                                        <xs:attribute type="xs:string" name="tag" use="optional"/>
+                                      </xs:extension>
+                                    </xs:simpleContent>
+                                  </xs:complexType>
+                                </xs:element>
+                                <xs:element name="RunSettings">
+                                  <xs:annotation>
+                                    <xs:documentation>Run Settings Configuration  Run Settings Configuration</xs:documentation>
+                                  </xs:annotation>
+                                  <xs:complexType>
+                                    <xs:simpleContent>
+                                      <xs:extension base="xs:string">
+                                        <xs:attribute type="xs:string" name="runCommand" use="optional"/>
+                                        <xs:attribute type="xs:string" name="hostName" use="optional"/>
+                                      </xs:extension>
+                                    </xs:simpleContent>
+                                  </xs:complexType>
+                                </xs:element>
+                                <xs:element name="NetworkPolicy">
+                                  <xs:annotation>
+                                    <xs:documentation>Network Policy configuration  Network Policy configuration</xs:documentation>
+                                  </xs:annotation>
+                                  <xs:complexType>
+                                    <xs:simpleContent>
+                                      <xs:extension base="xs:string">
+                                        <xs:attribute name="portType" use="optional">
+                                        	<xs:simpleType>
+                                        		<xs:restriction base="xs:string">
+                                        			<xs:enumeration value="Http" />
+                                        			<xs:enumeration value="Https"></xs:enumeration>
+                                        		</xs:restriction>
+                                        	</xs:simpleType>
+                                        </xs:attribute>
+                                        <xs:attribute type="xs:byte" name="hostPort" use="optional"/>
+                                        <xs:attribute type="xs:short" name="containerPort" use="optional"/>
+                                      </xs:extension>
+                                    </xs:simpleContent>
+                                  </xs:complexType>
+                                </xs:element>
+                                <xs:element name="HealthCheckRoute">
+                                  <xs:annotation>
+                                    <xs:documentation>Health Check Route Configuration  Health Check Route Configuration</xs:documentation>
+                                  </xs:annotation>
+                                  <xs:complexType>
+                                    <xs:simpleContent>
+                                      <xs:extension base="xs:string">
+                                        <xs:attribute type="xs:string" name="typeName" use="optional"/>
+                                        <xs:attribute type="xs:byte" name="nterval" use="optional"/>
+                                        <xs:attribute type="xs:string" name="path" use="optional"/>
+                                        <xs:attribute type="xs:byte" name="threshold" use="optional"/>
+                                        <xs:attribute type="xs:byte" name="ignore" use="optional"/>
+                                      </xs:extension>
+                                    </xs:simpleContent>
+                                  </xs:complexType>
+                                </xs:element>
+                                <xs:element type="xs:short" name="Volume">
+                                  <xs:annotation>
+                                    <xs:documentation>Volume Configuration  Volume Configuration</xs:documentation>
+                                  </xs:annotation>
+                                </xs:element>
+                                <xs:element name="Subnet">
+                                  <xs:annotation>
+                                    <xs:documentation>Subnet configuration  Subnet configuration</xs:documentation>
+                                  </xs:annotation>
+                                  <xs:complexType>
+                                    <xs:simpleContent>
+                                      <xs:extension base="xs:string">
+                                        <xs:attribute type="xs:string" name="subnetName" use="optional"/>
+                                        <xs:attribute type="xs:string" name="cidr" use="optional"/>
+                                      </xs:extension>
+                                    </xs:simpleContent>
+                                  </xs:complexType>
+                                </xs:element>
+                              </xs:sequence>
+                            </xs:complexType>
+                          </xs:element>
+                        </xs:sequence>
+                        <xs:attribute type="xs:string" name="applicationName" use="optional"/>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+            <xs:attribute type="xs:byte" name="id"/>
+            <xs:attribute type="xs:string" name="companyName"/>
+            <xs:attribute type="xs:string" name="tenantName"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
+

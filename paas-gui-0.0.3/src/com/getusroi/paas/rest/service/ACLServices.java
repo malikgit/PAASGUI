@@ -1,0 +1,369 @@
+package com.getusroi.paas.rest.service;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+
+import org.codehaus.jackson.map.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.getusroi.paas.acl.jaxb.ACLConfiguration;
+import com.getusroi.paas.acl.jaxb.ACLConfigurations;
+import com.getusroi.paas.acl.jaxb.ACLJAXBHelper;
+import com.getusroi.paas.acl.jaxb.Tenant;
+import com.getusroi.paas.acl.jaxb.TenantConfiguration;
+import com.getusroi.paas.acl.jaxb.UnableTOUnmarshalACl;
+import com.getusroi.paas.configuration.ConfigurationConstants;
+import com.getusroi.paas.dao.AclDAO;
+import com.getusroi.paas.dao.DataBaseOperationFailedException;
+import com.getusroi.paas.helper.PAASConstant;
+import com.getusroi.paas.marathon.service.MarathonServiceException;
+import com.getusroi.paas.rest.RestServiceHelper;
+import com.getusroi.paas.rest.service.exception.PAASNetworkServiceException;
+import com.getusroi.paas.sdn.service.impl.SDNServiceImplException;
+import com.getusroi.paas.vo.ACL;
+import com.getusroi.paas.vo.InOutBoundRule;
+import com.google.gson.Gson;
+
+
+@Path("/aclService")
+public class ACLServices {
+	 static final Logger logger = LoggerFactory.getLogger(ACLServices.class);
+	
+	 AclDAO aclDAO = null;
+	 InOutBoundRule inOutBoundRule = null;
+	 
+	 /**
+	  * Rest Service to handle acl insertion operation
+	  * @param aclData
+	  * @param req
+	  * @return
+	  * @throws DataBaseOperationFailedException
+	  */
+	 @POST
+	 @Path("/addACLRule")
+	 @Consumes(MediaType.APPLICATION_JSON)
+	 @Produces(MediaType.TEXT_PLAIN)
+	 public String addACLRule(String aclData,@Context HttpServletRequest req) throws /*SDNServiceImplException, */DataBaseOperationFailedException/*, PAASNetworkServiceException*/{
+		 logger.debug(".addACLRule method of ACLServices");
+		 ObjectMapper mapper = new ObjectMapper();
+		  aclDAO=new AclDAO();
+		 /*SDNInterface sdnService = new SDNServiceWrapperImpl();
+		 boolean flowFlag=false;*/
+		 try {
+			ACL acl = mapper.readValue(aclData, ACL.class);			
+//			flowFlag = sdnService.installFlow(acl.getAclName(), acl.getSourceIp(), acl.getDestinationIp(),PAASConstant.ACL_PASS_ACTION_KEY);
+			HttpSession session = req.getSession(true);
+			if(acl != null){
+				acl.setTenantId((int)session.getAttribute("id"));
+				aclDAO.insertACL(acl);
+				return PAASConstant.SUCCESS;
+			}			
+		} catch (IOException e) {
+			logger.error("Error in reading ACL Form data : "+aclData+" using object mapper , in addACLRule");
+		}
+		 return PAASConstant.FAILURE;
+	 }//end of method addACLRule
+	
+	 @POST
+	 @Path("/addXMLACLRule")
+	 @Consumes(MediaType.APPLICATION_JSON)
+	 @Produces(MediaType.TEXT_PLAIN)
+	 public String addXMLACLRule(String aclData,@Context HttpServletRequest req) throws DataBaseOperationFailedException, UnableTOUnmarshalACl {
+		 logger.debug(".addACLRule method of ACLServices");
+		 aclDAO=new AclDAO();
+		 try {
+			HttpSession session = req.getSession(true);
+			ACLJAXBHelper aclHelper = new ACLJAXBHelper();
+			TenantConfiguration tenantConfig = aclHelper.getAclConfiguration(aclData, ConfigurationConstants.ACL_CONFIG_XSD);
+			List<ACLConfiguration> aclConfigList = tenantConfig.getTenant().getACLConfigurations().getACLConfiguration();
+			logger.debug("Length of ACL: " + aclConfigList.size());
+			for(ACLConfiguration aclConfig : aclConfigList) {
+				ACL acl = new ACL();
+				acl.setTenantId((int)session.getAttribute("id"));
+				acl.setAclName(aclConfig.getACLName());
+				acl.setDescription(aclConfig.getDescription());
+				aclDAO.insertACL(acl);
+			}
+			return PAASConstant.SUCCESS;
+		} catch (UnableTOUnmarshalACl e) {
+			logger.error("Unable to Update XML Formated Data into ACL");
+			throw new UnableTOUnmarshalACl("Unable to Update XML Formated Data into ACL");
+		}
+	 }//end of method addACLRule
+	 
+	@GET
+	@Path("/getAllACL")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getAllACL(@Context HttpServletRequest req) throws DataBaseOperationFailedException{
+		logger.debug("Inside (.)  getAllACL of ACLServices ");
+		aclDAO = new AclDAO();
+		String aclInJsonString = null;
+		try {
+			HttpSession session = req.getSession(true);
+			List<ACL> aclList = aclDAO.getAllACL((int) session.getAttribute("id"));
+			Gson gson = new Gson();
+			aclInJsonString = gson.toJson(aclList);
+			logger.debug("aclInJsonString " + aclInJsonString);
+			return aclInJsonString;
+		} catch (DataBaseOperationFailedException e) {
+			logger.error("Error when getting all acl inside acl service "+e.getMessage());
+			throw new DataBaseOperationFailedException(e.getMessage());
+		}
+		
+	}//end of method getAllACL
+	
+	@GET
+	@Path("/getAllACLInXMLFormat")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String getAllACLInXMLFormat(@Context HttpServletRequest req) throws DataBaseOperationFailedException, JAXBException{
+		logger.debug("Inside (.)  getAllACLInXMLFormat of ACLServices ");
+		aclDAO = new AclDAO();
+		try {
+			HttpSession session = req.getSession(true);
+			List<ACL> aclList = aclDAO.getAllACL((int) session.getAttribute("id"));
+			List<ACLConfiguration> aclConfigurationList = new ArrayList<>();
+			ACLConfiguration aCLConfiguration;
+			for(ACL acl : aclList) {
+				aCLConfiguration = new ACLConfiguration();
+				aCLConfiguration.setACLName(acl.getAclName());
+				aCLConfiguration.setDescription(acl.getDescription());
+				aclConfigurationList.add(aCLConfiguration);
+			}
+			int tenantId = (int) session.getAttribute("id");
+			TenantConfiguration tenantConfig = new TenantConfiguration();
+			tenantConfig.setTenant(new Tenant());
+			tenantConfig.getTenant().setId(tenantId);
+			tenantConfig.getTenant().setACLConfigurations(new ACLConfigurations());
+			tenantConfig.getTenant().getACLConfigurations().setAclConfiguration(new ArrayList<ACLConfiguration>());
+			for(ACLConfiguration config : aclConfigurationList) {
+				tenantConfig.getTenant().getACLConfigurations().getACLConfiguration().add(config);
+			}
+			String aclXML = marshaling(tenantConfig);
+			logger.debug("ACL XML: " + aclXML);
+			return aclXML;
+		} catch (DataBaseOperationFailedException e) {
+			logger.error("Error when getting all acl inside acl service "+e.getMessage());
+			throw new DataBaseOperationFailedException(e.getMessage());
+		} 
+		
+	}//end of method getAllACL
+	  
+	static String marshaling(TenantConfiguration tenantConfig) throws JAXBException
+	{
+	    JAXBContext jaxbContext = JAXBContext.newInstance(TenantConfiguration.class);
+	    Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+	    jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+	    //Marshal the employees list in console
+	    jaxbMarshaller.marshal(tenantConfig, System.out);
+	    StringWriter xmlStringWriter = new StringWriter();
+	    jaxbMarshaller.marshal(tenantConfig, xmlStringWriter);
+	    String xmlString = xmlStringWriter.toString();
+	    return xmlString;
+	    //Marshal the employees list in file
+	}
+	 
+	 /**
+	  * Rest Service to Get All Acl names
+	  * @return
+	  * @throws DataBaseOperationFailedException
+	  */
+	 @GET
+	 @Path("/getAllACLNames")
+	 @Produces(MediaType.APPLICATION_JSON)
+	 public String getAllACLNames(@Context HttpServletRequest req) throws DataBaseOperationFailedException{
+		 logger.debug(".getAllACL method of ACLServices");
+		 HttpSession session = req.getSession(true);
+		 aclDAO=new AclDAO();
+		 List<String> aclList=aclDAO.getAllACLNames((int)session.getAttribute("id"));
+		 Gson gson=new Gson();
+		 String aclInJsonString=gson.toJson(aclList);
+		 return aclInJsonString;
+	 }//end of method getAllACLNames
+	 
+	 	@GET
+		@Path("/deleteACLByaclId/{aclId}")
+		@Produces(MediaType.TEXT_PLAIN)
+		public String deleteACLByaclId(@PathParam("aclId") String aclId,@Context HttpServletRequest req)
+				throws DataBaseOperationFailedException {
+	 		logger.debug(".deleteAclByName method of ACLServices aclId "+aclId);
+			aclDAO = new AclDAO();
+			aclDAO.deleteACLByaclId(new RestServiceHelper().convertStringToInteger(aclId));
+			return "acl with aclId : " + aclId + " is delete successfully";
+		}// end 
+	 
+	 	/**
+	 	 * To update Acl By using Id
+	 	 * @param acl
+	 	 * @param req
+	 	 * @return
+	 	 * @throws MarathonServiceException
+	 	 */
+	 	@PUT
+		@Path("/updateAclById")
+		@Produces(MediaType.TEXT_PLAIN)
+
+		public String updateAclById(String acl,@Context HttpServletRequest req) throws MarathonServiceException{
+			logger.debug(".updateAclById method of AclServices "+acl);
+			ObjectMapper mapper = new ObjectMapper();
+			aclDAO = new AclDAO();
+			try{
+				ACL inOutBoundRule=mapper.readValue(acl, ACL.class);
+				aclDAO.updateACLById(inOutBoundRule);
+				return "Success";
+			}catch(Exception e){
+				logger.error("Error updating acl ",e);
+			}
+			return "failed";
+		}
+	 	
+	 	
+		/**
+		 * To chckAcl name exist or not
+		 * @param aclName
+		 * @param req
+		 * @return
+		 * @throws DataBaseOperationFailedException
+		 */
+		@GET
+		@Path("/checkAcl/{aclName}")
+		@Produces(MediaType.TEXT_PLAIN)
+		public String aclValidation(@PathParam("aclName") String aclName,
+				@Context HttpServletRequest req)
+				throws DataBaseOperationFailedException {
+			logger.debug(" Inside (.) aclValidation of ACLServices");
+			HttpSession session = req.getSession(true);
+			aclDAO = new AclDAO();
+			int id = aclDAO.getACLIdByACLNames(aclName,
+					(int) session.getAttribute("id"));
+			if (id > 0)
+				return "success";
+			else
+				return "failure";
+		}// end of method aClByName validation
+		
+		
+	/**
+	 * Rest Service to Insert In Out Bound rule into the DB	
+	 * @param aclData
+	 * @param req
+	 * @throws SDNServiceImplException
+	 * @throws DataBaseOperationFailedException
+	 * @throws PAASNetworkServiceException
+	 */
+	@POST
+	@Path("/addInOutBoundRule")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
+	public String addInOutBoundRule(String aclData,
+			@Context HttpServletRequest req) throws SDNServiceImplException,
+			DataBaseOperationFailedException, PAASNetworkServiceException {
+		logger.debug("Inside (.) addInOutBoundRule of ACLServices");
+		ObjectMapper mapper = new ObjectMapper();
+		aclDAO = new AclDAO();
+		try {
+			inOutBoundRule = mapper.readValue(aclData, InOutBoundRule.class);
+			if (inOutBoundRule != null)
+				aclDAO.insertInOutBoundRule(inOutBoundRule);
+				return "Success";
+		} catch (IOException e) {
+			logger.error("Error in reading data : " + aclData
+					+ " using object mapper in addACLRule");
+			throw new PAASNetworkServiceException("Error in reading data : "
+					+ aclData + " using object mapper in addACLRule");
+		}
+		
+	}// end of method addACLRule
+		
+		
+		/**
+		 * To get all Inoutbound rule From db by acl id
+		 * @param aclName
+		 * @param req
+		 * @return
+		 * @throws DataBaseOperationFailedException
+		 */
+		@GET
+		@Path("/getAllInOutBoundRuleByAclId/{selectedAclId}")
+		@Produces(MediaType.APPLICATION_JSON)
+		public String getAllInOutBoundRuleByAclId(@PathParam("selectedAclId") String selectedAclId,@Context HttpServletRequest req)
+				throws DataBaseOperationFailedException {
+			logger.debug("Inside (.) getAllInOutBoundRuleByAclId of ACLServices "+selectedAclId);
+			aclDAO = new AclDAO();
+			String aclInJsonString = null;
+			try {
+				 
+				HttpSession session = req.getSession(true);
+				List<InOutBoundRule> aclList = aclDAO.getAllInOutBoundRules(Integer.parseInt(selectedAclId), (int) session.getAttribute("id"));
+				Gson gson = new Gson();
+				aclInJsonString = gson.toJson(aclList);
+				logger.debug("" + aclInJsonString);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return aclInJsonString;
+		}// end of method getAllACL
+		
+		/**
+		 * This method is to call delete In Out bound rule mehtod of jdbc.
+		 * @param id
+		 * @param req
+		 * @return
+		 * @throws DataBaseOperationFailedException
+		 */
+		@GET
+		@Path("/deleteInOutBoundRuleById/{id}")
+		@Produces(MediaType.TEXT_PLAIN)
+		public String deleteInOutBoundRuleById(@PathParam("id") int id,@Context HttpServletRequest req)
+				throws DataBaseOperationFailedException {
+	 		logger.debug(".deleteInOutBoundRuleById method of AclServices id "+id);
+			aclDAO = new AclDAO();
+			aclDAO.deleteInOutBoundRuleById(id);
+			return "acl with name : " + id + " is delete successfully";
+		}// end 
+		
+		/**
+		 * To update In Out Bound rule By using id
+		 * @param inOutBndRule
+		 * @param req
+		 * @return
+		 * @throws MarathonServiceException
+		 */
+		
+		@PUT
+		@Path("/updateInOutBoundRuleById")
+		@Produces(MediaType.TEXT_PLAIN)
+		public String updateInOutBoundRuleById(String inOutBndRule,@Context HttpServletRequest req) throws MarathonServiceException{
+			logger.debug(".updateInOutBoundRuleById method of AclServices "+inOutBndRule);
+			ObjectMapper mapper = new ObjectMapper();
+			aclDAO = new AclDAO();
+			try{
+				
+				InOutBoundRule inOutBoundRule=mapper.readValue(inOutBndRule, InOutBoundRule.class);
+				logger.debug(">>>>>>>>>>>>>> "+ inOutBoundRule.getAction());
+				aclDAO.updateInOutBoundRuleById(inOutBoundRule);
+				return "Success";
+			}catch(Exception e){
+				logger.error("Error updating InOutBoundRule ",e);
+			}
+			return "failed";
+		}
+		
+}

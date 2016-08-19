@@ -1,0 +1,31 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="TenantConfiguration">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Tenant">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="AddVirtualPrivateCloudConfigs">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="AddVirtualPrivateCloudConfig" maxOccurs="unbounded" minOccurs="0">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element type="xs:string" name="VPCName"/>
+                          <xs:element type="xs:string" name="Cidr"/>
+                          <xs:element type="xs:string" name="Acl"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+            <xs:attribute type="xs:byte" name="id"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
+
